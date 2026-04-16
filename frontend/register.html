@@ -1,53 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register — Secure File Sharing</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body class="auth-page">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register — Secure File Sharing</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">🔐</div>
+      <h1>Secure File Sharing</h1>
+      <p class="auth-sub">Create your account</p>
 
-<div class="auth-card">
-  <div class="auth-logo">🔐</div>
-  <h1>Secure File Sharing</h1>
-  <p class="auth-sub">Create your account</p>
+      <h2>Register</h2>
+      <input
+        type="text"
+        id="regUsername"
+        placeholder="Username"
+        autocomplete="username"
+      />
+      <input
+        type="email"
+        id="regEmail"
+        placeholder="Email address"
+        autocomplete="email"
+      />
+      <input
+        type="password"
+        id="regPassword"
+        placeholder="Password (min 6)"
+        autocomplete="new-password"
+      />
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <div id="regMsg" class="msg"></div>
+      <p class="switch-link">
+        Already have an account? <a href="login.html">Login</a>
+      </p>
+    </div>
 
-  <h2>Register</h2>
-  <input type="text"     id="regUsername" placeholder="Username"         autocomplete="username"/>
-  <input type="email"    id="regEmail"    placeholder="Email address"    autocomplete="email"/>
-  <input type="password" id="regPassword" placeholder="Password (min 6)" autocomplete="new-password"/>
-  <button class="btn-primary" onclick="doRegister()">Create Account</button>
-  <div id="regMsg" class="msg"></div>
-  <p class="switch-link">Already have an account? <a href="login.html">Login</a></p>
-</div>
+    <script>
+      const API =
+        "https://blockchain-based-secure-file-sharing-7j0l.onrender.com";
 
-<script>
-  const API = "http://127.0.0.1:5000";
+      function setMsg(text, ok) {
+        const el = document.getElementById("regMsg");
+        el.textContent = text;
+        el.className = "msg " + (ok ? "success" : "error");
+      }
 
-  function setMsg(text, ok) {
-    const el = document.getElementById("regMsg");
-    el.textContent = text;
-    el.className   = "msg " + (ok ? "success" : "error");
-  }
+      async function doRegister() {
+        const username = document.getElementById("regUsername").value.trim();
+        const email = document.getElementById("regEmail").value.trim();
+        const password = document.getElementById("regPassword").value.trim();
 
-  async function doRegister() {
-    const username = document.getElementById("regUsername").value.trim();
-    const email    = document.getElementById("regEmail").value.trim();
-    const password = document.getElementById("regPassword").value.trim();
+        if (!username || !email || !password)
+          return setMsg("All fields are required.", false);
 
-    if (!username || !email || !password)
-      return setMsg("All fields are required.", false);
-
-    const res  = await fetch(`${API}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password })
-    });
-    const data = await res.json();
-    setMsg(data.message, data.success);
-    if (data.success) setTimeout(() => window.location.href = "login.html", 1200);
-  }
-</script>
-</body>
+        const res = await fetch(`${API}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password }),
+        });
+        const data = await res.json();
+        setMsg(data.message, data.success);
+        if (data.success)
+          setTimeout(() => (window.location.href = "login.html"), 1200);
+      }
+    </script>
+  </body>
 </html>
