@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Secure File Sharing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="auth-page">
+
+<div class="auth-card">
+  <div class="auth-logo">🔐</div>
+  <h1>Secure File Sharing</h1>
+  <p class="auth-sub">Blockchain-Powered File Exchange</p>
+
+  <!-- LOGIN FORM -->
+  <div id="loginSection">
+    <h2>Login</h2>
+    <input type="text"     id="loginUsername" placeholder="Username" autocomplete="username"/>
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password"/>
+    <button class="btn-primary" onclick="doLogin()">Login</button>
+    <div id="loginMsg" class="msg"></div>
+    <p class="switch-link">
+      No account? <a href="register.html">Register</a> &nbsp;|&nbsp;
+      <a href="#" onclick="showForgot()">Forgot Password?</a>
+    </p>
+  </div>
+
+  <!-- FORGOT PASSWORD Step 1 -->
+  <div id="forgotSection" style="display:none">
+    <h2>Forgot Password</h2>
+    <input type="text" id="forgotUsername" placeholder="Enter your username"/>
+    <button class="btn-primary" onclick="doForgot()">Send OTP</button>
+    <div id="forgotMsg" class="msg"></div>
+    <p class="switch-link"><a href="#" onclick="showLogin()">← Back to Login</a></p>
+  </div>
+
+  <!-- FORGOT PASSWORD Step 2 -->
+  <div id="otpSection" style="display:none">
+    <h2>Reset Password</h2>
+    <input type="text"     id="otpInput"        placeholder="Enter OTP"/>
+    <input type="password" id="newPassword"     placeholder="New Password"/>
+    <input type="password" id="confirmPassword" placeholder="Confirm Password"/>
+    <button class="btn-primary" onclick="doVerifyOtp()">Reset Password</button>
+    <div id="otpMsg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+  const API = "http://127.0.0.1:5000";
+  let forgotUsername = "";
+
+  // If already logged in, redirect to dashboard
+  if (localStorage.getItem("token")) {
+    window.location.href = "index.html";
+  }
+
+  function showLogin()  { toggle("loginSection");  }
+  function showForgot() { toggle("forgotSection"); }
+  function toggle(id) {
+    ["loginSection","forgotSection","otpSection"].forEach(s =>
+      document.getElementById(s).style.display = s === id ? "block" : "none"
+    );
+  }
+
+  function setMsg(id, text, ok) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className   = "msg " + (ok ? "success" : "error");
+  }
+
+  async function doLogin() {
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    if (!username || !password) return setMsg("loginMsg", "Fill all fields.", false);
+
+    const res  = await fetch(`${API}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // Save token and username to localStorage
+      localStorage.setItem("token",    data.token);
+      localStorage.setItem("username", data.username);
+      window.location.href = "index.html";
+    } else {
+      setMsg("loginMsg", data.message, false);
+    }
+  }
+
+  async function doForgot() {
+    forgotUsername = document.getElementById("forgotUsername").value.trim();
+    if (!forgotUsername) return setMsg("forgotMsg", "Enter your username.", false);
+
+    const res  = await fetch(`${API}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: forgotUsername })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      let msg = data.message;
+      if (data.otp) msg += `\n[DEMO] Your OTP: ${data.otp}`;
+      setMsg("forgotMsg", msg, true);
+      setTimeout(() => toggle("otpSection"), 800);
+    } else {
+      setMsg("forgotMsg", data.message, false);
+    }
+  }
+
+  async function doVerifyOtp() {
+    const otp         = document.getElementById("otpInput").value.trim();
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const confirm     = document.getElementById("confirmPassword").value.trim();
+
+    if (!otp || !newPassword || !confirm) return setMsg("otpMsg", "Fill all fields.", false);
+    if (newPassword !== confirm)          return setMsg("otpMsg", "Passwords do not match.", false);
+
+    const res  = await fetch(`${API}/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: forgotUsername, otp, new_password: newPassword })
+    });
+    const data = await res.json();
+    setMsg("otpMsg", data.message, data.success);
+    if (data.success) setTimeout(showLogin, 1500);
+  }
+</script>
+</body>
+</html>

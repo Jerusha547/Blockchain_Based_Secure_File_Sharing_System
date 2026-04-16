@@ -1,0 +1,8 @@
+flask
+flask-cors
+flask-mail
+bcrypt
+pycryptodome
+web3
+py-solc-x
+gunicorn
