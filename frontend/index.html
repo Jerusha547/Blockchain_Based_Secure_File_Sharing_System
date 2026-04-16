@@ -1,108 +1,132 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard — Secure File Sharing</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="nav-brand">🔐 Secure File Sharing</div>
-  <div class="nav-right">
-    <span id="navUser" class="nav-user"></span>
-    <button class="btn-outline" onclick="logout()">Logout</button>
-  </div>
-</nav>
-
-<!-- TABS -->
-<div class="tab-bar">
-  <button class="tab active" onclick="switchTab('upload',   this)">📤 Upload</button>
-  <button class="tab"        onclick="switchTab('files',    this)">📁 My Files</button>
-  <button class="tab"        onclick="switchTab('shared',   this)">🤝 Shared with Me</button>
-</div>
-
-<main class="container">
-
-  <!-- ── UPLOAD TAB ────────────────────────────────────────────── -->
-  <section id="tab-upload" class="tab-content active">
-    <div class="card">
-      <h2>📤 Upload & Encrypt File</h2>
-      <p class="subtitle">File is encrypted with AES-256 and its hash is stored on blockchain.</p>
-
-      <div class="upload-zone" id="uploadZone"
-           ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-        <p>Drag & drop a file here, or click below</p>
-        <input type="file" id="uploadInput" onchange="previewFile()"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Secure File Sharing</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="nav-brand">🔐 Secure File Sharing</div>
+      <div class="nav-right">
+        <span id="navUser" class="nav-user"></span>
+        <button class="btn-outline" onclick="logout()">Logout</button>
       </div>
+    </nav>
 
-      <div id="filePreview" class="file-preview" style="display:none">
-        <span id="previewName"></span>
-        <span id="previewSize" class="badge"></span>
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('upload', this)">
+        📤 Upload
+      </button>
+      <button class="tab" onclick="switchTab('files', this)">
+        📁 My Files
+      </button>
+      <button class="tab" onclick="switchTab('shared', this)">
+        🤝 Shared with Me
+      </button>
+    </div>
+
+    <main class="container">
+      <!-- ── UPLOAD TAB ────────────────────────────────────────────── -->
+      <section id="tab-upload" class="tab-content active">
+        <div class="card">
+          <h2>📤 Upload & Encrypt File</h2>
+          <p class="subtitle">
+            File is encrypted with AES-256 and its hash is stored on blockchain.
+          </p>
+
+          <div
+            class="upload-zone"
+            id="uploadZone"
+            ondragover="event.preventDefault()"
+            ondrop="handleDrop(event)"
+          >
+            <p>Drag & drop a file here, or click below</p>
+            <input type="file" id="uploadInput" onchange="previewFile()" />
+          </div>
+
+          <div id="filePreview" class="file-preview" style="display: none">
+            <span id="previewName"></span>
+            <span id="previewSize" class="badge"></span>
+          </div>
+
+          <button class="btn-primary" onclick="doUpload()">
+            🔒 Encrypt & Store on Blockchain
+          </button>
+          <div id="uploadMsg" class="msg"></div>
+          <div id="uploadInfo" class="hash-box" style="display: none"></div>
+        </div>
+      </section>
+
+      <!-- ── MY FILES TAB ──────────────────────────────────────────── -->
+      <section id="tab-files" class="tab-content">
+        <div class="card">
+          <h2>📁 My Uploaded Files</h2>
+          <button class="btn-secondary" onclick="loadFiles()">
+            🔄 Refresh
+          </button>
+          <div id="fileList" class="file-table-wrap">
+            <p class="hint">Click Refresh to load your files.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SHARED TAB ────────────────────────────────────────────── -->
+      <section id="tab-shared" class="tab-content">
+        <div class="card">
+          <h2>🤝 Files Shared With Me</h2>
+          <button class="btn-secondary" onclick="loadFiles()">
+            🔄 Refresh
+          </button>
+          <div id="sharedList" class="file-table-wrap">
+            <p class="hint">Click Refresh to load shared files.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- SHARE MODAL -->
+    <div id="shareModal" class="modal-overlay" style="display: none">
+      <div class="modal">
+        <h3>Share File</h3>
+        <p id="shareFileName" class="modal-sub"></p>
+        <input
+          type="text"
+          id="shareTarget"
+          placeholder="Enter username to share with"
+        />
+        <div class="modal-actions">
+          <button class="btn-primary" onclick="doShare()">Share</button>
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+        <div id="shareMsg" class="msg"></div>
       </div>
-
-      <button class="btn-primary" onclick="doUpload()">🔒 Encrypt & Store on Blockchain</button>
-      <div id="uploadMsg"  class="msg"></div>
-      <div id="uploadInfo" class="hash-box" style="display:none"></div>
     </div>
-  </section>
 
-  <!-- ── MY FILES TAB ──────────────────────────────────────────── -->
-  <section id="tab-files" class="tab-content">
-    <div class="card">
-      <h2>📁 My Uploaded Files</h2>
-      <button class="btn-secondary" onclick="loadFiles()">🔄 Refresh</button>
-      <div id="fileList" class="file-table-wrap">
-        <p class="hint">Click Refresh to load your files.</p>
+    <!-- VERIFY MODAL -->
+    <div id="verifyModal" class="modal-overlay" style="display: none">
+      <div class="modal">
+        <h3>Verify File Integrity</h3>
+        <p id="verifyFileName" class="modal-sub"></p>
+        <div id="verifyResult" class="verify-result"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeVerifyModal()">
+            Close
+          </button>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- ── SHARED TAB ────────────────────────────────────────────── -->
-  <section id="tab-shared" class="tab-content">
-    <div class="card">
-      <h2>🤝 Files Shared With Me</h2>
-      <button class="btn-secondary" onclick="loadFiles()">🔄 Refresh</button>
-      <div id="sharedList" class="file-table-wrap">
-        <p class="hint">Click Refresh to load shared files.</p>
-      </div>
-    </div>
-  </section>
+    <footer>
+      <p>
+        © 2026 <strong>Secure File Sharing</strong> — Blockchain-Powered File
+        Exchange
+      </p>
+    </footer>
 
-</main>
-
-<!-- SHARE MODAL -->
-<div id="shareModal" class="modal-overlay" style="display:none">
-  <div class="modal">
-    <h3>Share File</h3>
-    <p id="shareFileName" class="modal-sub"></p>
-    <input type="text" id="shareTarget" placeholder="Enter username to share with"/>
-    <div class="modal-actions">
-      <button class="btn-primary"   onclick="doShare()">Share</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-    </div>
-    <div id="shareMsg" class="msg"></div>
-  </div>
-</div>
-
-<!-- VERIFY MODAL -->
-<div id="verifyModal" class="modal-overlay" style="display:none">
-  <div class="modal">
-    <h3>Verify File Integrity</h3>
-    <p id="verifyFileName" class="modal-sub"></p>
-    <div id="verifyResult" class="verify-result"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeVerifyModal()">Close</button>
-    </div>
-  </div>
-</div>
-
-<footer>
-  <p>© 2026 <strong>Secure File Sharing</strong> — Blockchain-Powered File Exchange</p>
-</footer>
-
-<script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
