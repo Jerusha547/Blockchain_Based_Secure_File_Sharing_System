@@ -3,7 +3,7 @@
  * Token-based auth: token stored in localStorage, sent as Bearer header.
  */
 
-const API = "http://127.0.0.1:5000";
+const API = "https://blockchain-based-secure-file-sharing-7j0l.onrender.com";
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
 function getToken() {
@@ -12,14 +12,14 @@ function getToken() {
 
 function authHeaders() {
   return {
-    "Authorization": "Bearer " + getToken()
+    Authorization: "Bearer " + getToken(),
   };
 }
 
 function authHeadersJSON() {
   return {
-    "Authorization": "Bearer " + getToken(),
-    "Content-Type": "application/json"
+    Authorization: "Bearer " + getToken(),
+    "Content-Type": "application/json",
   };
 }
 
@@ -30,7 +30,7 @@ function authHeadersJSON() {
     window.location.href = "login.html";
     return;
   }
-  const res  = await fetch(`${API}/auth/me`, { headers: authHeaders() });
+  const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
   const data = await res.json();
   if (!data.success) {
     localStorage.clear();
@@ -49,8 +49,12 @@ async function logout() {
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(name, btn) {
-  document.querySelectorAll(".tab-content").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((s) => s.classList.remove("active"));
+  document
+    .querySelectorAll(".tab")
+    .forEach((b) => b.classList.remove("active"));
   document.getElementById("tab-" + name).classList.add("active");
   btn.classList.add("active");
   if (name === "files" || name === "shared") loadFiles();
@@ -61,12 +65,12 @@ function setMsg(id, text, ok) {
   const el = document.getElementById(id);
   if (!el) return;
   el.textContent = text;
-  el.className   = "msg " + (ok ? "success" : "error");
+  el.className = "msg " + (ok ? "success" : "error");
 }
 
 function formatBytes(bytes) {
-  if (bytes < 1024)         return bytes + " B";
-  if (bytes < 1024 * 1024)  return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
@@ -79,7 +83,7 @@ function handleDrop(e) {
 
 function previewFile() {
   const input = document.getElementById("uploadInput");
-  const file  = input.files[0];
+  const file = input.files[0];
   if (!file) return;
   document.getElementById("previewName").textContent = file.name;
   document.getElementById("previewSize").textContent = formatBytes(file.size);
@@ -88,7 +92,7 @@ function previewFile() {
 
 async function doUpload() {
   const input = document.getElementById("uploadInput");
-  const info  = document.getElementById("uploadInfo");
+  const info = document.getElementById("uploadInfo");
   info.style.display = "none";
 
   if (!input.files.length)
@@ -100,18 +104,17 @@ async function doUpload() {
   setMsg("uploadMsg", "⏳ Encrypting and uploading …", true);
 
   try {
-    const res  = await fetch(`${API}/files/upload`, {
+    const res = await fetch(`${API}/files/upload`, {
       method: "POST",
-      headers: authHeaders(),   // token auth — no Content-Type (browser sets multipart)
-      body: formData
+      headers: authHeaders(), // token auth — no Content-Type (browser sets multipart)
+      body: formData,
     });
     const data = await res.json();
 
     if (data.success) {
       setMsg("uploadMsg", "✅ " + data.message, true);
       info.style.display = "block";
-      info.innerHTML =
-        `<strong>File Hash (SHA-256):</strong><br>
+      info.innerHTML = `<strong>File Hash (SHA-256):</strong><br>
          <code>${data.file_hash}</code><br><br>
          <strong>Blockchain TX:</strong><br>
          <code>${data.tx_hash}</code><br>
@@ -131,10 +134,10 @@ async function doUpload() {
 // ── File list ─────────────────────────────────────────────────────────────────
 async function loadFiles() {
   try {
-    const res  = await fetch(`${API}/files/list`, { headers: authHeaders() });
+    const res = await fetch(`${API}/files/list`, { headers: authHeaders() });
     const data = await res.json();
     if (!data.success) return;
-    renderFileTable("fileList",   data.owned,  false);
+    renderFileTable("fileList", data.owned, false);
     renderFileTable("sharedList", data.shared, true);
   } catch (err) {
     document.getElementById("fileList").innerHTML =
@@ -149,11 +152,13 @@ function renderFileTable(containerId, files, isShared) {
     return;
   }
 
-  const rows = files.map(f => `
+  const rows = files
+    .map(
+      (f) => `
     <tr>
       <td>${escHtml(f.original_name)}</td>
       <td class="hash-cell" title="${escHtml(f.blockchain_hash)}">
-        ${escHtml(f.blockchain_hash.substring(0,16))}…
+        ${escHtml(f.blockchain_hash.substring(0, 16))}…
       </td>
       <td>${new Date(f.uploaded_at).toLocaleString()}</td>
       ${isShared ? `<td>${escHtml(f.granted_by || "—")}</td>` : ""}
@@ -166,14 +171,20 @@ function renderFileTable(containerId, files, isShared) {
                 onclick="openVerify(${f.id}, '${escHtml(f.original_name)}')">
           ✅ Verify
         </button>
-        ${!isShared ? `
+        ${
+          !isShared
+            ? `
         <button class="btn-sm btn-orange"
                 onclick="openShare(${f.id}, '${escHtml(f.original_name)}')">
           🔗 Share
-        </button>` : ""}
+        </button>`
+            : ""
+        }
       </td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 
   el.innerHTML = `
     <table class="file-table">
@@ -194,7 +205,7 @@ function renderFileTable(containerId, files, isShared) {
 async function doDownload(fileId, filename) {
   try {
     const res = await fetch(`${API}/files/download/${fileId}`, {
-      headers: authHeaders()
+      headers: authHeaders(),
     });
 
     if (!res.ok) {
@@ -204,9 +215,9 @@ async function doDownload(fileId, filename) {
     }
 
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
@@ -225,9 +236,11 @@ function openVerify(fileId, filename) {
 
 async function doVerify(fileId) {
   try {
-    const res  = await fetch(`${API}/files/verify/${fileId}`, { headers: authHeaders() });
+    const res = await fetch(`${API}/files/verify/${fileId}`, {
+      headers: authHeaders(),
+    });
     const data = await res.json();
-    const ok   = data.integrity_ok;
+    const ok = data.integrity_ok;
     document.getElementById("verifyResult").innerHTML = `
       <div class="verify-row ${ok ? "ok" : "fail"}">
         <strong>Local Integrity:</strong>
@@ -235,16 +248,21 @@ async function doVerify(fileId) {
       </div>
       <div class="verify-row ${data.blockchain_ok === true ? "ok" : data.blockchain_ok === false ? "fail" : "warn"}">
         <strong>Blockchain:</strong>
-        ${data.blockchain_ok === true  ? "✅ Hash found on-chain" :
-          data.blockchain_ok === false ? "❌ Hash not found on-chain" :
-          "⚠️ Ganache offline"}
+        ${
+          data.blockchain_ok === true
+            ? "✅ Hash found on-chain"
+            : data.blockchain_ok === false
+              ? "❌ Hash not found on-chain"
+              : "⚠️ Ganache offline"
+        }
       </div>
       <div class="hash-detail">
         <strong>Stored Hash:</strong><br>
         <code>${data.stored_hash}</code>
       </div>`;
   } catch (err) {
-    document.getElementById("verifyResult").textContent = "❌ Verify failed: " + err.message;
+    document.getElementById("verifyResult").textContent =
+      "❌ Verify failed: " + err.message;
   }
 }
 
@@ -272,10 +290,10 @@ async function doShare() {
   if (!target) return setMsg("shareMsg", "Enter a username.", false);
 
   try {
-    const res  = await fetch(`${API}/files/share`, {
+    const res = await fetch(`${API}/files/share`, {
       method: "POST",
       headers: authHeadersJSON(),
-      body: JSON.stringify({ file_id: _shareFileId, share_to: target })
+      body: JSON.stringify({ file_id: _shareFileId, share_to: target }),
     });
     const data = await res.json();
     setMsg("shareMsg", data.message, data.success);
@@ -288,6 +306,8 @@ async function doShare() {
 // ── XSS helper ────────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
