@@ -60,17 +60,22 @@ def upload():
     # 2. SHA-256 of the encrypted file
     file_hash = _sha256(encrypted_bytes)
 
-    # 3. Store on blockchain
-    blockchain_available = is_blockchain_available()
-    tx_hash = "BLOCKCHAIN_OFFLINE"
-    if blockchain_available:
-        try:
-            tx_hash = store_hash(file_hash)
-        except Exception as e:
-            return jsonify({"success": False,
-                            "message": f"Blockchain error: {str(e)}"}), 500
-    else:
-        print("⚠️  Ganache not running — skipping on-chain storage.")
+    # 3. Store on blockchain — always required, never silently skipped
+    if not is_blockchain_available():
+        return jsonify({
+            "success": False,
+            "message": (
+                "Blockchain node is offline. "
+                "Local: start Ganache with `ganache --port 7545`. "
+                "Remote: set BLOCKCHAIN_RPC_URL and DEPLOYER_PRIVATE_KEY env vars on Render."
+            )
+        }), 503
+
+    try:
+        tx_hash = store_hash(file_hash)
+    except Exception as e:
+        return jsonify({"success": False,
+                        "message": f"Blockchain error: {str(e)}"}), 500
 
     # 4. Save encrypted file to disk
     stored_name = f"{uuid.uuid4().hex}_{original_name}.enc"
@@ -92,11 +97,11 @@ def upload():
     db.close()
 
     return jsonify({
-        "success":    True,
-        "message":    "File uploaded, encrypted and stored on blockchain.",
-        "file_hash":  file_hash,
-        "tx_hash":    tx_hash,
-        "blockchain": blockchain_available
+        "success":   True,
+        "message":   "File uploaded, encrypted and stored on blockchain.",
+        "file_hash": file_hash,
+        "tx_hash":   tx_hash,
+        "blockchain": True
     })
 
 

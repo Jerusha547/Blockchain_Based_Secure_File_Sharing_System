@@ -10,3 +10,14 @@ services:
         sync: false
       - key: MAIL_PASSWORD
         sync: false
+      # ── Blockchain (required to store hashes on-chain) ──────────────────────
+      # Get a free Infura key at https://infura.io and use Sepolia testnet.
+      # Then fund your deployer wallet with free Sepolia ETH from:
+      #   https://sepoliafaucet.com  or  https://faucets.chain.link/sepolia
+      - key: BLOCKCHAIN_RPC_URL
+        sync: false   # e.g. https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
+      - key: DEPLOYER_PRIVATE_KEY
+        sync: false   # e.g. 0xabc123...  (your MetaMask/wallet private key)
+      # ── Optional: keep for local override ──────────────────────────────────
+      - key: GANACHE_URL
+        value: "http://127.0.0.1:7545"
